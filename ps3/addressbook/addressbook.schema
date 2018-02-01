@@ -1,0 +1,5 @@
+create table patreonid_mxid  (
+    patreonid number not null,
+    mxid text not null,
+    unique(patreonid, mxid)
+);

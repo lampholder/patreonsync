@@ -1,0 +1,9 @@
+*.yaml
+*.sql
+*.toxic
+*.pyc
+*.db
+build/*
+dist/*
+*.egg-info/
+
