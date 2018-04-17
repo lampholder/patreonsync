@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import sys
+import codecs
+sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
+
 import yaml
 import argparse
 
@@ -9,7 +13,14 @@ from ps3.subscribers import GuestListUtils
 from ps3.subscribers.patreon import PatreonGuestList
 from ps3.subscribers import YamlGuestList
 
+from ps3.util.TokenRefresher import refresh_token
+
 CONFIG_FILE = 'config.yaml'
+
+# Get a fresh set of oauth credentials every time. Don't leave it a month
+# between executions else you'll have to get new tokens using the web UI at
+# https://www.patreon.com/portal/registration/register-clients 
+refresh_token(CONFIG_FILE)
 
 if __name__ == "__main__":
 
