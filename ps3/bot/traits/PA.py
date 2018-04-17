@@ -30,7 +30,7 @@ class PA(Trait):
             room = self.get_client().create_room(is_public=False)
             query = 'insert into patreon_room (patreon_id, room_id) values (?, ?)'
             cursor.execute(query, (patron.pid, room.room_id))
-            Matrix.invite_threepid_user(self.get_client(), room.room_id, patron.email)
+            print 'PA: Inviting %s' % patron.email, Matrix.invite_threepid_user(self.get_client(), room.room_id, patron.email)
             room.send_text(WELCOME_MESSAGE)
             database.commit()
             return room
@@ -40,15 +40,20 @@ class PA(Trait):
 
     def get_mxid_from_patron(self, patron, create_room=True):
         """Check in the patron's room to see if they've joined."""
-        print 'Do the needful for %s?' % patron.name,
-        do_the_do = raw_input()
-        if do_the_do != 'y':
-            return None
         room = self.get_or_create_room(patron, create_room=create_room)
         if room is not None:
+            invite_worked = False
             for event in Matrix.stream_messages(self.get_client(), room.room_id):
                 if (event['type'] == 'm.room.member'
                         and event['sender'] != self.get_client().user_id):
                     room.leave()
                     return event['sender']
+                if (event['type'] == 'm.room.third_party_invite'
+                        or ('membership' in event and event['membership'] == 'invite')):
+                    invite_worked = True
+            if not invite_worked:
+                print 'We didn\'t actually invite %s, retrying' % patron.email
+                print 'PA: Reinviting %s' % patron.email, Matrix.invite_threepid_user(self.get_client(),
+                                                                                      room.room_id,
+                                                                                      patron.email)
         return None
