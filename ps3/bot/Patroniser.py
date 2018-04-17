@@ -12,8 +12,8 @@ class Patroniser(Bouncer, PA):
 
     def __init__(self, username, password):
         self.client = MatrixClient('https://matrix.org')
-        self.client.login_with_password(username=username,
-                                        password=password)
+        self.client.login_with_password_no_sync(username=username,
+                                                password=password)
 
     def get_client(self):
         """Provide the matrix client for all the myriad purposes."""
