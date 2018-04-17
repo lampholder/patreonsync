@@ -4,6 +4,7 @@
 import sqlite3
 
 from ps3.bot.traits import Trait
+from matrix_client.errors import MatrixRequestError
 
 class Bouncer(Trait):
     """Makes sure a room member list matches a given list of mxids."""
@@ -25,7 +26,11 @@ class Bouncer(Trait):
             if user != self.get_client().user_id:
                 if actually_kick:
                     print 'Bouncer: Kicking %s from %s' % (user, room_alias)
-                    room.kick_user(user, reason='PatroniserBot thinks you\'re no longer entitled to access this room. If PatroniserBot is wrong, kindly let us know in #matrix:matrix.org. Thanks for your support!')
+                    try:
+                        room.kick_user(user, reason='PatroniserBot thinks you\'re no longer entitled to access this room. If PatroniserBot is wrong, kindly let us know in #matrix:matrix.org. Thanks for your support!')
+                    except KeyError, e:
+                        if e.message == 'retry_after_ms':
+                            print 'Bouncer: Failed to kick %s from %s - remote server 429ed us' % (user, room_alias)
                 else:
                     print 'Bouncer: Would have kicked %s from %s' % (user, room_alias)
 
@@ -37,7 +42,14 @@ class Bouncer(Trait):
             if (user, room.room_id) not in already_invited:
                 if actually_invite:
                     print 'Bouncer: Inviting %s to %s' % (user, room_alias)
-                    self._invite(user, room, database)
+                    try:
+                        self._invite(user, room, database)
+                    except KeyError, e:
+                        if e.message == 'retry_after_ms':
+                            print 'Bouncer: Failed to invite %s to %s - remote server 429ed us' % (user, room_alias)
+                    except MatrixRequestError, e:
+                        print e
+
                 else:
                     print 'Bouncer: Would have invited %s to %s' % (user, room_alias)
             else:
