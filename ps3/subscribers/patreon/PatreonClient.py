@@ -52,10 +52,11 @@ class Patreon(object):
         response = self._api.fetch_page_of_pledges(campaign_id, batch_size)
         if isinstance(response, dict) and 'errors' in response:
             error = response['errors'][0]
-            if error['title'] == '401':
-                error['detail'] = (error['detail'] + '\n' +
-                                   'Visit https://www.patreon.com/portal/registration/register-clients to reset client key.')
-            raise Exception('%s: %s - %s' % (error['status'], error['title'], error['detail']))
+            if error['status'] == '401':
+                message = 'Visit https://www.patreon.com/portal/registration/register-clients to reset client key.'
+                raise Exception('%s: %s - %s' % (error['status'], error['title'], message))
+            else:
+                raise Exception('%s: %s - %s' % (error['status'], error['title'], error['detail']))
         else:
             return response.json_data
 
