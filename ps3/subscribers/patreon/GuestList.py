@@ -24,18 +24,24 @@ class PatreonGuestList(object):
         self._address_book = AddressBook()
 
     def _patreon_users_guest_list(self, campaign_id):
-        """Return a dict of room names to entitled members"""
+        """Return a dict of room names to tuples of (entitled members, a flag
+        indicating whether this is the top tier they qualify for)"""
 
         guest_list = {reward.room_alias: [] for reward in REWARDS}
 
         for patron in self._client.patrons(campaign_id):
+            top_reward_tier = max([reward for reward in REWARDS
+                                   if patron.amount >= reward.minimum_donation],
+                                  key=lambda r: r.minimum_donation)
             for reward in REWARDS:
                 if patron.active and patron.amount >= reward.minimum_donation:
-                    guest_list[reward.room_alias].append(patron)
+                    guest_list[reward.room_alias].append((patron,
+                                                          reward==top_reward_tier))
 
         return guest_list
 
-    def guest_list(self, campaign_id, skip_lookup=False, create_room=True):
+    def guest_list(self, campaign_id, skip_lookup=False, create_room=True,
+                   verbose=False):
 
         mxid_guest_list = defaultdict(list)
 
@@ -47,12 +53,12 @@ class PatreonGuestList(object):
         looked_up_guests = []
 
         for room, guests in self._patreon_users_guest_list(campaign_id).iteritems():
-            for guest in guests:
+            for (guest, is_top_tier) in guests:
                 mxids = self._address_book.get_mxids(guest.pid)
                 if len(mxids) > 0:
                     print 'PA: Found Patreon "%s" in address book; resolved to %s' % (guest.name, ','.join(mxids))
                     for mxid in mxids:
-                        mxid_guest_list[room].append(mxid)
+                        mxid_guest_list[room].append((mxid, is_top_tier))
                 elif skip_lookup:
                     print 'PA: Couldn\'t find Patreon "%s" in address book; skipping matrix lookup' % guest.name
                 elif guest.pid in looked_up_guests:
@@ -64,7 +70,7 @@ class PatreonGuestList(object):
                     if mxid != None:
                         print 'PA: Newly resolved Patreon "%s" to %s' % (guest.name, mxid)
                         self._address_book.add(guest.pid, mxid)
-                        mxid_guest_list[room].append(mxid)
+                        mxid_guest_list[room].append((mxid, is_top_tier))
                     else:
                         print 'PA: Patreon "%s" has not yet joined their lookup room.' % guest.name
 

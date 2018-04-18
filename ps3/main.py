@@ -11,6 +11,7 @@ from ps3.bot import Patroniser
 from ps3.subscribers import GuestListUtils
 
 from ps3.subscribers.patreon import PatreonGuestList
+from ps3.subscribers.patreon import PatreonGroupGuestList
 from ps3.subscribers import YamlGuestList
 
 from ps3.util.TokenRefresher import refresh_token
@@ -25,10 +26,13 @@ refresh_token(CONFIG_FILE)
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--doinvites', action='store_true')
-    parser.add_argument('--dokicks', action='store_true')
+    parser.add_argument('--do-room-invites', action='store_true')
+    parser.add_argument('--do-room-kicks', action='store_true')
+    parser.add_argument('--do-group-invites', action='store_true')
+    parser.add_argument('--do-group-kicks', action='store_true')
     parser.add_argument('--createrooms', action='store_true')
     parser.add_argument('--skiplookup', action='store_true')
+    parser.add_argument('--verbose', action='store_true')
 
     args = parser.parse_args()
 
@@ -56,9 +60,18 @@ if __name__ == "__main__":
                                            staff])
 
     for room, guests in guest_list.iteritems():
-        patroniser.enforce(room, guests,
-                           actually_invite=args.doinvites,
-                           actually_kick=args.dokicks)
+        community_guests = [guest[0] for guest in guests if guest[1]]
+        patroniser.enforce_group(room.replace('#', '+', 1),
+                                 community_guests,
+                                 actually_invite=args.do_group_invites,
+                                 actually_kick=args.do_group_kicks,
+                                 verbose=args.verbose)
+
+        room_guests = [guest[0] for guest in guests]
+        patroniser.enforce(room, room_guests,
+                           actually_invite=args.do_room_invites,
+                           actually_kick=args.do_room_kicks,
+                           verbose=args.verbose)
 
 # get all the patrons
 # see who we already know

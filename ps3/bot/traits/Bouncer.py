@@ -3,6 +3,7 @@
 
 import sqlite3
 
+from ps3.util import Community
 from ps3.bot.traits import Trait
 from matrix_client.errors import MatrixRequestError
 
@@ -12,9 +13,55 @@ class Bouncer(Trait):
     def __init__(self):
         self._database = sqlite3.connect('invites.db')
 
-    def enforce(self, room_alias, guests, actually_invite=True, actually_kick=True):
+    def enforce_group(self, group, guests, actually_invite=False,
+                      actually_kick=False, verbose=False):
+        print
+        print 'Bouncer: Syncing group membership: %s' % group
+        community = Community(group)
+        access_token = self.get_client().api.token
+
+        members_and_invited_members = (community.members(access_token) +
+                                       community.invited_users(access_token))
+
+        for guest in guests:
+            if guest not in members_and_invited_members:
+                if actually_invite:
+                    if verbose:
+                        print 'Bouncer: Inviting %s to %s' % (guest, group),
+                    else:
+                        print '+%s' % guest,
+                    try:
+                        print community.invite(guest, access_token)
+                    except Exception, e:
+                        print e
+                else:
+                    if verbose:
+                        print 'Bouncer: Would have invited %s to %s' % (guest, group)
+                    else:
+                        print '+%s' % guest
+
+        for member in members_and_invited_members:
+            if member not in guests:
+                if actually_kick and member != '@patroniser:matrix.org':
+                    if verbose:
+                        print 'Bouncer: Kicking %s from %s' % (member, group),
+                    else:
+                        print '-%s' % member,
+                    try:
+                        print community.remove(guest, access_token)
+                    except Exception, e:
+                        print e
+                else:
+                    if verbose:
+                        print 'Bouncer: Would have kicked %s from %s' % (member, group)
+                    else:
+                        print '-%s' % member
+
+    def enforce(self, room_alias, guests, actually_invite=True,
+                actually_kick=True, verbose=False):
         """Sync the membership of a room with a defined list."""
-        print 'Bouncer: Syncing membership of %s' % room_alias
+        print
+        print 'Bouncer: Syncing room membership: %s' % room_alias
         room = self.get_client().join_room(room_alias)
 
         occupants = [user.user_id for user in room.get_joined_members()]
@@ -25,14 +72,21 @@ class Bouncer(Trait):
         for user in to_kick:
             if user != self.get_client().user_id:
                 if actually_kick:
-                    print 'Bouncer: Kicking %s from %s' % (user, room_alias)
+                    if verbose:
+                        print 'Bouncer: Kicking %s from %s' % (user, room_alias)
+                    else:
+                        print '-%s' % user
                     try:
                         room.kick_user(user, reason='PatroniserBot thinks you\'re no longer entitled to access this room. If PatroniserBot is wrong, kindly let us know in #matrix:matrix.org. Thanks for your support!')
                     except KeyError, e:
                         if e.message == 'retry_after_ms':
-                            print 'Bouncer: Failed to kick %s from %s - remote server 429ed us' % (user, room_alias)
+                            if verbose:
+                                print 'Bouncer: Failed to kick %s from %s - remote server 429ed us' % (user, room_alias)
                 else:
-                    print 'Bouncer: Would have kicked %s from %s' % (user, room_alias)
+                    if verbose:
+                        print 'Bouncer: Would have kicked %s from %s' % (user, room_alias)
+                    else:
+                        print '-%s' % user
 
         database = sqlite3.connect('invites.db')
 
@@ -46,14 +100,19 @@ class Bouncer(Trait):
                         self._invite(user, room, database)
                     except KeyError, e:
                         if e.message == 'retry_after_ms':
-                            print 'Bouncer: Failed to invite %s to %s - remote server 429ed us' % (user, room_alias)
+                            if verbose:
+                                print 'Bouncer: Failed to invite %s to %s - remote server 429ed us' % (user, room_alias)
                     except MatrixRequestError, e:
                         print e
 
                 else:
-                    print 'Bouncer: Would have invited %s to %s' % (user, room_alias)
+                    if verbose:
+                        print 'Bouncer: Would have invited %s to %s' % (user, room_alias)
+                    else:
+                        print '+%s' % user
             else:
-                print 'Bouncer: Politely not re-inviting %s to %s' % (user, room_alias)
+                if verbose:
+                    print 'Bouncer: Politely not re-inviting %s to %s' % (user, room_alias)
 
     def _get_issued_invites(self, database):
         query = 'select mxid, roomid from invites'

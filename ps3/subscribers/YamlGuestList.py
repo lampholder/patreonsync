@@ -15,14 +15,14 @@ class YamlGuestList(object):
     def guest_list(self):
         """Return a guest list generated from the YAML config file"""
         return {
-            LINEAR: self._yaml_config[LINEAR] +
-                    self._yaml_config[QUADRATIC] +
-                    self._yaml_config[POLYNOMIAL] +
-                    self._yaml_config[ELLIPTIC],
-            QUADRATIC: self._yaml_config[QUADRATIC] +
-                       self._yaml_config[POLYNOMIAL] +
-                       self._yaml_config[ELLIPTIC],
-            POLYNOMIAL: self._yaml_config[POLYNOMIAL] +
-                        self._yaml_config[ELLIPTIC],
-            ELLIPTIC: self._yaml_config[ELLIPTIC]
+            LINEAR: [(user, True) for user in self._yaml_config[LINEAR]] +
+                    [(user, False) for user in self._yaml_config[QUADRATIC]] +
+                    [(user, False) for user in self._yaml_config[POLYNOMIAL]] +
+                    [(user, False) for user in self._yaml_config[ELLIPTIC]],
+            QUADRATIC: [(user, True) for user in self._yaml_config[QUADRATIC]] +
+                       [(user, False) for user in self._yaml_config[POLYNOMIAL]] +
+                       [(user, False) for user in self._yaml_config[ELLIPTIC]],
+            POLYNOMIAL: [(user, True) for user in self._yaml_config[POLYNOMIAL]] +
+                        [(user, False) for user in self._yaml_config[ELLIPTIC]],
+            ELLIPTIC: [(user, True) for user in self._yaml_config[ELLIPTIC]]
         }
