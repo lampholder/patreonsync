@@ -39,6 +39,13 @@ class PatreonGuestList(object):
 
         mxid_guest_list = defaultdict(list)
 
+        # Resolving guests via Matrix is s l o w; we end up doing it for each
+        # instance of the guest for each room they're entitled to be in.
+        # Rather than do the obvious restructuring this could benefit from,
+        # let's just track the guests we've already looked up via Matrix once
+        # this go and not bother to look them up again.
+        looked_up_guests = []
+
         for room, guests in self._patreon_users_guest_list(campaign_id).iteritems():
             for guest in guests:
                 mxids = self._address_book.get_mxids(guest.pid)
@@ -48,8 +55,11 @@ class PatreonGuestList(object):
                         mxid_guest_list[room].append(mxid)
                 elif skip_lookup:
                     print 'PA: Couldn\'t find Patreon "%s" in address book; skipping matrix lookup' % guest.name
+                elif guest.pid in looked_up_guests:
+                    print 'PA: Couldn\'t find Patreon "%s" in address book; already looked up via Matrix this session so skipping for now.' % guest.name
                 else:
                     print 'PA: Couldn\'t find Patreon "%s" in address book; resolving via matrix...' % guest.name
+                    looked_up_guests.append(guest.pid)
                     mxid = self._patroniser_bot.get_mxid_from_patron(guest, create_room=create_room)
                     if mxid != None:
                         print 'PA: Newly resolved Patreon "%s" to %s' % (guest.name, mxid)
