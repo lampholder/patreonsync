@@ -1,0 +1,54 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool]
+
+[tool.isort]
+profile = "black"
+
+[tool.poetry]
+name = "patreonsync"
+version = "0.3"
+description = "A tool to keep matrix room membership in sync with a patreon subscription."
+authors = ["Thomas Lant <lampholder@gmail.com>"]
+readme = "README.md"
+repository = "https://github.com/lampholder/patreonsync"
+keywords = ["matrix", "patreon"]
+license = "Apache-2.0"
+include = ["LICENSE"]
+packages = [
+    { include = "ps3/*"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Communications :: Chat"
+]
+
+[tool.poetry.dependencies]
+certifi = "^2021.10.8"
+chardet = "^4.0.0"
+idna = "^3.3"
+matrix-client = "0.0.5"
+patreon = "^0.5.0"
+python = "^3.8"
+PyYAML = "^6.0"
+requests = "^2.27.1"
+urllib3 = "^1.26.9"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^3.9.2"
+pre-commit = "^2.17.0"
+pre-commit-poetry-export = "^0.1.2"
+mypy = "^0.942"
+pytest = "^6.2.5"
+requests = "^2.26.0"
+types-PyYAML = "^6.0.5"
+types-requests = "^2.27.15"
+
+[tool.poetry.scripts]
+patreonsync = "ps3:main"

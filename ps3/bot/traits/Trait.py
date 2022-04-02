@@ -1,10 +1,12 @@
-# coding=utf-8
+#!/usr/bin/env python3
 """Docstring ftw"""
 
 from abc import ABCMeta, abstractmethod
 
+
 class Trait:
     """Abstract class for behaviours we want the bot to have."""
+
     __metaclass__ = ABCMeta
 
     @abstractmethod
