@@ -1,7 +1,7 @@
-import time
 import threading
-
+import time
 from functools import wraps
+
 
 def rate_limited(max_per_second):
     """
@@ -20,7 +20,7 @@ def rate_limited(max_per_second):
             left_to_wait = min_interval - elapsed
 
             if left_to_wait > 0:
-                print 'Hit rate limit; waiting for %d seconds' % left_to_wait
+                print("Hit rate limit; waiting for %d seconds" % left_to_wait)
                 time.sleep(left_to_wait)
 
             lock.release()
